@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Byblos Lunch Superbike Prix</title>
+    <meta http-equiv="Cache-Control" content="no-store">
+    <link rel="stylesheet" href="styles.css?v=20260618-sprint">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="arena" aria-label="Thursday lunch derby game">
+        <header class="game-hud">
+          <div class="brand-lockup">
+            <img class="byblos-logo" src="assets/byblos-bank-logo.png" alt="Byblos Bank">
+            <p>Lunch Prix</p>
+            <h1>Eating Day Grand Prix</h1>
+          </div>
+
+          <div class="timer-card" id="timerCard" aria-label="Race timer">
+            <span id="raceTimer">00:00:00</span>
+          </div>
+
+          <div class="hud-actions">
+            <button class="tool-btn primary" id="startBtn" type="button">Start Race</button>
+            <button class="tool-btn" id="pauseBtn" type="button">Pause</button>
+            <button class="tool-btn" id="panelToggle" type="button" title="Hide or show the side menu">Hide Menu</button>
+            <button class="icon-btn" id="resetBtn" type="button" title="Reset race" aria-label="Reset race">R</button>
+          </div>
+        </header>
+
+        <div class="track-frame">
+          <canvas id="raceCanvas" width="1500" height="820" aria-label="Animated restaurant superbike race"></canvas>
+          <div class="winner-banner" id="winnerBanner" hidden>
+            <span id="winnerStage">Winner</span>
+            <strong id="winnerName">Restaurant</strong>
+            <ol id="podiumList"></ol>
+          </div>
+        </div>
+
+      </section>
+
+      <aside class="control-room" aria-label="Restaurant controls">
+        <section class="panel add-panel">
+          <div class="panel-head">
+            <div>
+              <p>Restaurant Picks</p>
+              <h2>Add Riders</h2>
+            </div>
+            <span id="countLabel">0 picks</span>
+          </div>
+
+          <form class="entry-form" id="entryForm">
+            <div class="entry-combobox">
+              <input id="restaurantInput" type="text" maxlength="50" autocomplete="off" placeholder="Add restaurant name" aria-label="Restaurant name">
+              <button class="suggestion-toggle" id="suggestionToggle" type="button" aria-label="Show saved restaurants">▾</button>
+              <div class="suggestion-dropdown" id="restaurantSuggestions" hidden></div>
+            </div>
+            <button class="add-btn" type="submit">Add</button>
+          </form>
+
+          <ol class="entries" id="entriesList" aria-label="Restaurant entries"></ol>
+        </section>
+
+        <section class="panel settings-panel">
+          <div class="panel-head">
+            <div>
+              <p>Race Settings</p>
+              <h2 id="lineupSummary">Ready Room</h2>
+            </div>
+          </div>
+
+          <div class="duration-card">
+            <div class="panel-subhead compactish">
+              <strong>Race Length</strong>
+              <span id="durationPreview">01:00</span>
+            </div>
+            <div class="duration-inputs">
+              <label class="time-box">
+                <span>Minutes</span>
+                <input id="minutesInput" type="number" min="0" max="9" value="1" inputmode="numeric">
+              </label>
+              <label class="time-box">
+                <span>Seconds</span>
+                <input id="secondsInput" type="number" min="0" max="599" value="0" inputmode="numeric">
+              </label>
+            </div>
+            <div class="preset-row" aria-label="Race duration presets">
+              <button class="preset-btn" type="button" data-duration="60">1:00</button>
+              <button class="preset-btn" type="button" data-duration="90">1:30</button>
+              <button class="preset-btn" type="button" data-duration="140">2:20</button>
+            </div>
+          </div>
+
+          <div class="duration-card">
+            <div class="panel-subhead compactish">
+              <strong>Advance per heat</strong>
+            </div>
+            <div class="preset-row" aria-label="How many advance per heat">
+              <button class="preset-btn qualifier-btn" type="button" data-qualifiers="1">Top 1</button>
+              <button class="preset-btn qualifier-btn" type="button" data-qualifiers="2">Top 2</button>
+              <button class="preset-btn qualifier-btn" type="button" data-qualifiers="3">Top 3</button>
+            </div>
+          </div>
+
+          <button class="tournament-btn" id="tournamentBtn" type="button">Tournament Mode</button>
+          <button class="danger-btn" id="resetAllBtn" type="button">Clear All Restaurants</button>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="tabs" role="tablist" aria-label="Panels">
+            <button class="tab-btn active" id="lineupTab" type="button" data-tab="lineup" role="tab" aria-selected="true">Lineup</button>
+            <button class="tab-btn" id="historyTab" type="button" data-tab="history" role="tab" aria-selected="false">History</button>
+          </div>
+
+          <div class="tab-panel active" id="lineupPanel" role="tabpanel" aria-labelledby="lineupTab">
+            <div class="stats-list" id="statsList"></div>
+            <span class="last-winner" id="lastWinnerLabel">No winner yet</span>
+          </div>
+
+          <div class="tab-panel" id="historyPanel" role="tabpanel" aria-labelledby="historyTab" hidden>
+            <div class="panel-subhead">
+              <h2>Winner Ratings</h2>
+              <span id="historyCountLabel">0 races</span>
+            </div>
+            <div class="history-list" id="historyList"></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js?v=20260618-sprint"></script>
+  </body>
+</html>
