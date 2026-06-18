@@ -44,6 +44,13 @@ const MIN_TRACK_DISTANCE = 2300;
 // across the finish line instead of coasting/waiting. Lower = bikes lean harder
 // on their surges; higher = flatter, more metronomic racing.
 const RACE_PACE = 0.58;
+// Race-length lock. A uniform global "tempo" nudges the WHOLE field (every bike
+// scaled equally, so relative racing/lead-changes/sprint are untouched) to keep
+// the front-runner on a time schedule, so the leader crosses the line right as
+// the clock runs out. The schedule is eased (exponent > 1) so bikes build up and
+// genuinely accelerate into the flag instead of holding a flat pace.
+const RACE_SCHEDULE_EXP = 1.9;
+const RACE_TEMPO_GAIN = 4.2;
 const BYBLOS_PURPLE = "#4b1777";
 const BYBLOS_DARK_PURPLE = "#2a0f42";
 const BYBLOS_GOLD = "#e5c100";
@@ -613,6 +620,16 @@ function updateRace(delta) {
   const finalStretch = distToFinishLeader < distance * 0.2 || progress > 0.8;
   arena.classList.toggle("final-sprint", state.running && finalStretch);
 
+  // Tempo governor — keeps the race length matched to the timer. We compare the
+  // leader's progress to where the eased time-schedule says it should be, then
+  // scale the entire field by one factor. Because it's uniform it never bunches
+  // the pack; it just stretches the whole race to fill the chosen duration so a
+  // 30s race lasts ~30s and the winner crosses as the clock hits zero.
+  const timeFrac = clamp(progress, 0, 1);
+  const leaderFrac = clamp((leaderX - RACE_START_X) / distance, 0, 1);
+  const schedule = Math.pow(timeFrac, RACE_SCHEDULE_EXP);
+  const tempo = clamp(1 - (leaderFrac - schedule) * RACE_TEMPO_GAIN, 0.85, 1.8);
+
   let raceFinisher = null;
   let raceFinishTime = Infinity;
   const ranked = [...state.racers].sort((a, b) => b.x - a.x);
@@ -710,7 +727,7 @@ function updateRace(delta) {
 
     // Speed floor stays HIGH during the sprint so no bike ever crawls or waits.
     mult = clamp(mult, sprinting ? 0.95 : 0.32, sprinting ? 3.7 : 2.6);
-    const speed = basePace * mult;
+    const speed = basePace * mult * tempo;
     racer.speed = speed;
     racer.currentKmh += (clamp(racer.cruiseKmh * (speed / basePace), 70, sprinting ? 540 : 430) - racer.currentKmh) * Math.min(1, delta * 4.4);
     racer.bob += delta * (14 + speed / 18);
@@ -2528,4 +2545,4 @@ function roundRect(x, y, width, height, radius) {
 
 window.addEventListener("resize", drawRace);
 drawRace();
-// build: 20260618-sprint
+// build: 20260618-timelock
