@@ -166,12 +166,12 @@ const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-per
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.1;
+renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.04;
 appEl.appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
-const HORIZON=0x5a2a63;
-scene.fog=new THREE.Fog(HORIZON,140,760);
+const HORIZON=0xc2b2d0;
+scene.fog=new THREE.Fog(HORIZON,300,1500);
 const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,3000);
 camera.position.set(-18,9,16); camera.lookAt(20,2,0);
 const clock=new THREE.Clock();
@@ -181,8 +181,8 @@ const cam={ yaw:Math.PI*0.96, pitch:0.22, dist:13, auto:true, follow:true,
   dragging:false, lastX:0, lastY:0, target:new THREE.Vector3(START_X+8,1.4,0) };
 
 // lights
-scene.add(new THREE.HemisphereLight(0xbfa0ff,0x2a1830,0.9));
-const sun=new THREE.DirectionalLight(0xfff0d6,2.0);
+scene.add(new THREE.HemisphereLight(0xbcd4ff,0x4f4a38,0.62));
+const sun=new THREE.DirectionalLight(0xfff4e6,2.7);
 sun.position.set(40,60,30); sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024); sun.shadow.camera.near=1; sun.shadow.camera.far=240;
 sun.shadow.camera.left=-60; sun.shadow.camera.right=60; sun.shadow.camera.top=60; sun.shadow.camera.bottom=-60;
@@ -208,7 +208,7 @@ sunDisc.position.set(260,150,-900); sunDisc.lookAt(0,150,0); scene.add(sunDisc);
 // environment reflections (metallic sheen). Guarded: needs a real WebGL renderer.
 try{
   const pmrem=new THREE.PMREMGenerator(renderer);
-  const envScene=new THREE.Scene(); envScene.background=new THREE.Color(0x6a3a78);
+  const envScene=new THREE.Scene(); envScene.background=new THREE.Color(0xadb7c6);
   const envLight=new THREE.HemisphereLight(0xffffff,0x202030,1.0); envScene.add(envLight);
   scene.environment=pmrem.fromScene(envScene,0,0.1,100).texture;
 }catch(e){ /* headless / unsupported: skip reflections */ }
@@ -225,7 +225,7 @@ function checkerTexture(sq){
 const world=new THREE.Group(); scene.add(world);
 function buildStaticWorld(){
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(4000,1600),
-    new THREE.MeshStandardMaterial({color:0x214f2c,roughness:1}));
+    new THREE.MeshStandardMaterial({color:0x3f7d42,roughness:1}));
   ground.rotation.x=-Math.PI/2; ground.position.set(TRACK_LEN/2,-0.02,0); ground.receiveShadow=true; world.add(ground);
   const road=new THREE.Mesh(new THREE.PlaneGeometry(TRACK_LEN+80,ROAD_HALF*2),
     new THREE.MeshStandardMaterial({color:0x2b2b33,roughness:0.85,metalness:0.05}));
@@ -340,7 +340,7 @@ function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y);
   g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
 function makeBanner(name){
   const c=document.createElement("canvas"); c.width=512; c.height=140; const tex=new THREE.CanvasTexture(c);
-  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.15),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2.9,0.8),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
   function draw(pos,color){ const g=c.getContext("2d"); g.clearRect(0,0,512,140);
     g.fillStyle="rgba(14,8,22,0.86)"; roundRect(g,6,30,500,86,22); g.fill();
     g.strokeStyle=color; g.lineWidth=4; roundRect(g,6,30,500,86,22); g.stroke();
@@ -364,13 +364,13 @@ function makeWheel(){
 function addBlob(g){ const b=new THREE.Mesh(new THREE.CircleGeometry(1.4,20),
     new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.26}));
   b.rotation.x=-Math.PI/2; b.position.y=0.04; g.add(b); return b; }
-function attachBanner(g,name){ const b=makeBanner(name); b.mesh.position.set(0,2.8,0); g.add(b.mesh); return b; }
+function attachBanner(g,name){ const b=makeBanner(name); b.mesh.position.set(0,3.5,0); g.add(b.mesh); return b; }
 
 function makeBike(color,name){
   const g=new THREE.Group();
   if(bikeProto){ const m=bikeProto.clone(true); g.add(m);
     g.userData={wheels:[],banner:attachBanner(g,name),head:null,blob:addBlob(g)}; return g; }
-  const paint=new THREE.MeshStandardMaterial({color,metalness:0.65,roughness:0.22,envMapIntensity:1.3});
+  const paint=new THREE.MeshStandardMaterial({color,metalness:0.6,roughness:0.3,envMapIntensity:0.9});
   const carbon=new THREE.MeshStandardMaterial({color:0x14161d,metalness:0.5,roughness:0.4});
   const chrome=new THREE.MeshStandardMaterial({color:0xcfd4dd,metalness:1,roughness:0.18});
   const glass=new THREE.MeshStandardMaterial({color:0x2a3346,metalness:0.4,roughness:0.05,transparent:true,opacity:0.55});
@@ -506,7 +506,7 @@ function placeBikes(dt){
     if(g.userData.head) g.userData.head.material.emissiveIntensity=1.4+r.nitro*1.8;
     if(g.userData.trail){ g.userData.trail.material.opacity=clamp(r.nitro*0.55,0,0.55); g.userData.trail.scale.set(1,1+r.nitro*2.4,1); }
     if(g.userData.blob) g.userData.blob.material.opacity=0.30-Math.min(0.1,g.position.y);
-    g.getWorldQuaternion(_q); g.userData.banner.mesh.quaternion.copy(_q).invert().multiply(camera.quaternion);
+    g.userData.banner.mesh.visible=state.running; g.getWorldQuaternion(_q); g.userData.banner.mesh.quaternion.copy(_q).invert().multiply(camera.quaternion);
   });
 }
 function camTarget(){
