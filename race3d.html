@@ -445,10 +445,10 @@ function updateRace(dt){
     if(racer.eventTimer<=0){ const hungry=sprinting&&rank>0; const ac=hungry?0.9:0.45+rankRatio*0.3;
       if(Math.random()<ac){ racer.attackTarget=0.3+Math.random()*(hungry?1.2:0.7); racer.slumpTarget=Math.random()<0.16?0.06+Math.random()*0.14:0; }
       else{ racer.attackTarget=0; racer.slumpTarget=0.2+Math.random()*(racer.collapseRisk>0.55?0.6:0.4); }
-      if(rank===0&&!sprinting&&Math.random()<0.3){ racer.slumpTarget+=0.18+Math.random()*0.3; racer.attackTarget*=0.6; }
+      if(rank===0&&!sprinting&&Math.random()<0.16){ racer.slumpTarget+=0.1+Math.random()*0.16; racer.attackTarget*=0.8; }
       racer.eventTimer=sprinting?0.3+Math.random()*0.6:0.6+Math.random()*1.4; }
     racer.surgeTimer-=dt;
-    if(racer.surgeTimer<=0){ racer.nextSurge=(Math.random()-0.48)*racer.volatility*(sprinting?0.4:0.26);
+    if(racer.surgeTimer<=0){ racer.nextSurge=(Math.random()-0.48)*racer.volatility*(sprinting?0.28:0.16);
       racer.traffic=!sprinting&&Math.random()<0.2?Math.random():0; racer.surgeTimer=sprinting?0.22+Math.random()*0.5:0.35+Math.random()*1.0; }
     racer.nitroCooldown-=dt;
     if(racer.nitroCooldown<=0){ const ch=(sprinting?0.6:0.3)+rankRatio*0.4;
@@ -459,15 +459,15 @@ function updateRace(dt){
     racer.attack+=(racer.attackTarget-racer.attack)*Math.min(1,dt*(sprinting?3.8:2.2));
     racer.slump+=(racer.slumpTarget-racer.slump)*Math.min(1,dt*(sprinting?3.4:1.9));
     racer.surge+=(racer.nextSurge-racer.surge)*Math.min(1,dt*(sprinting?5.5:3.8));
-    racer.burst+=(Math.random()-0.5)*racer.volatility*(sprinting?1.7:1.1)*dt; racer.burst=clamp(racer.burst,sprinting?-0.2:-0.18,sprinting?0.32:0.24);
+    racer.burst+=(Math.random()-0.5)*racer.volatility*(sprinting?1.7:1.1)*dt; racer.burst=clamp(racer.burst,sprinting?-0.13:-0.1,sprinting?0.22:0.14);
     racer.fieldBias+=(Math.random()-0.48)*racer.volatility*0.02*dt; racer.fieldBias=clamp(racer.fieldBias,-0.03,0.034);
-    const wave=Math.sin(state.raceTime*0.7+racer.wobble)*0.12, nitroBoost=racer.nitro*0.9;
-    let mult=racer.paceBias*RACE_PACE+racer.fieldBias*0.9+racer.attack-racer.slump*0.8+racer.surge+racer.burst+wave*0.6+nitroBoost;
+    const wave=Math.sin(state.raceTime*0.7+racer.wobble)*0.12, nitroBoost=racer.nitro*0.6;
+    let mult=racer.paceBias*RACE_PACE+racer.fieldBias*0.9+racer.attack-racer.slump*0.55+racer.surge+racer.burst+wave*0.5+nitroBoost;
     const gap=Math.max(0,leaderX-racer.x);
-    if(!sprinting){ const gf=clamp(gap/0.16,0,1), fade=clamp(1-progress/0.78,0,1); mult+=gf*0.5*drama*racer.clutch*fade; mult-=racer.traffic*0.16*racer.drag; }
+    if(!sprinting){ const gf=clamp(gap/0.16,0,1), fade=clamp(1-progress/0.78,0,1); mult+=gf*0.3*drama*racer.clutch*fade; mult-=racer.traffic*0.1*racer.drag; }
     else{ const ramp=clamp(1-myDist/0.24,0,1), hunger=racer.finishHunger*(0.55+racer.closingKick*0.7); mult+=ramp*(0.45+hunger*0.9); if(homeStretch) mult+=ramp*(0.25+racer.finishHunger*0.45); }
-    mult=clamp(mult,sprinting?0.95:0.32,sprinting?3.7:2.6);
-    const speed=basePace*mult*tempo; racer.speed=speed;
+    mult=clamp(mult,sprinting?1.0:0.62,sprinting?3.7:2.5);
+    const targetSpeed=basePace*mult*tempo; racer.speed+=(targetSpeed-racer.speed)*Math.min(1,dt*3.0); const speed=racer.speed;
     racer.currentKmh+=(clamp(racer.cruiseKmh*(speed/basePace),70,sprinting?540:430)-racer.currentKmh)*Math.min(1,dt*4.4);
     const nx=racer.x+speed*dt;
     if(nx>=1&&racer.x<1&&speed>0){ const t=(1-racer.x)/speed; if(t<bestT){bestT=t;finisher=racer;} }
