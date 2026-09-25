@@ -2,133 +2,146 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Byblos Lunch Superbike Prix</title>
-    <meta http-equiv="Cache-Control" content="no-store">
-    <link rel="stylesheet" href="styles.css?v=20260618-timelock">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Foodie Pick</title>
+    <meta name="description" content="Can't decide where to eat? Spin the wheel, race the restaurants, and let the food gods pick lunch.">
+    <meta name="theme-color" content="#ff5a36">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍕</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <main class="game-shell">
-      <section class="arena" aria-label="Thursday lunch derby game">
-        <header class="game-hud">
-          <div class="brand-lockup">
-            <img class="byblos-logo" src="assets/byblos-bank-logo.png" alt="Byblos Bank">
-            <p>Lunch Prix</p>
-            <h1>Eating Day Grand Prix</h1>
-          </div>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Foodie Pick home">
+        <span class="brand-mark" aria-hidden="true">🍽️</span>
+        <span class="brand-word">Foodie<em>Pick</em></span>
+      </a>
+      <p class="tagline" id="tagline">Where are we eating today?</p>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="soundBtn" type="button" aria-pressed="true" title="Sound on/off">🔊</button>
+        <button class="icon-btn" id="themeBtn" type="button" title="Switch light/dark">🌙</button>
+      </div>
+    </header>
 
-          <div class="timer-card" id="timerCard" aria-label="Race timer">
-            <span id="raceTimer">00:00:00</span>
-          </div>
+    <main class="layout">
+      <section class="stage-card" aria-label="Picker">
+        <div class="mode-tabs" role="tablist" aria-label="Pick mode">
+          <button class="mode-tab" role="tab" type="button" data-mode="wheel" aria-selected="true">
+            <span aria-hidden="true">🎡</span> Wheel
+          </button>
+          <button class="mode-tab" role="tab" type="button" data-mode="race" aria-selected="false">
+            <span aria-hidden="true">🏁</span> Race
+          </button>
+          <button class="mode-tab" role="tab" type="button" data-mode="knockout" aria-selected="false">
+            <span aria-hidden="true">🥊</span> Knockout
+          </button>
+        </div>
+        <p class="mode-hint" id="modeHint"></p>
 
-          <div class="hud-actions">
-            <button class="tool-btn primary" id="startBtn" type="button">Start Race</button>
-            <button class="tool-btn" id="pauseBtn" type="button">Pause</button>
-            <button class="tool-btn" id="panelToggle" type="button" title="Hide or show the side menu">Hide Menu</button>
-            <button class="icon-btn" id="resetBtn" type="button" title="Reset race" aria-label="Reset race">R</button>
+        <div class="stage" id="stage">
+          <div class="wheel-wrap" id="wheelWrap">
+            <div class="wheel-pointer" id="wheelPointer" aria-hidden="true"></div>
+            <canvas id="wheelCanvas" width="640" height="640" aria-label="Restaurant wheel"></canvas>
+            <button class="wheel-hub" id="hubBtn" type="button" aria-label="Spin the wheel">SPIN</button>
           </div>
-        </header>
-
-        <div class="track-frame">
-          <canvas id="raceCanvas" width="1500" height="820" aria-label="Animated restaurant superbike race"></canvas>
-          <div class="winner-banner" id="winnerBanner" hidden>
-            <span id="winnerStage">Winner</span>
-            <strong id="winnerName">Restaurant</strong>
-            <ol id="podiumList"></ol>
+          <div class="race-wrap" id="raceWrap" hidden>
+            <canvas id="raceCanvas" aria-label="Food race track"></canvas>
           </div>
+          <div class="empty-stage" id="emptyStage" hidden>
+            <div class="empty-emoji" aria-hidden="true">🍟🍔🌯</div>
+            <h2>Feed me options!</h2>
+            <p>Add at least <strong>2 spots</strong> to the lineup and the fun begins.</p>
+            <button class="btn ghost" id="emptyAddBtn" type="button">Add spots</button>
+          </div>
+          <ol class="knockout-trail" id="knockoutTrail" aria-label="Knocked out" hidden></ol>
         </div>
 
+        <div class="stage-controls">
+          <button class="btn primary big" id="goBtn" type="button">
+            <span class="go-label" id="goLabel">Pick my lunch!</span>
+          </button>
+          <div class="race-length" id="raceLength" role="radiogroup" aria-label="Race length" hidden>
+            <button type="button" role="radio" data-len="10">Snack 10s</button>
+            <button type="button" role="radio" data-len="20">Meal 20s</button>
+            <button type="button" role="radio" data-len="40">Feast 40s</button>
+          </div>
+        </div>
+        <p class="sr-only" aria-live="polite" id="liveRegion"></p>
       </section>
 
-      <aside class="control-room" aria-label="Restaurant controls">
-        <section class="panel add-panel">
-          <div class="panel-head">
-            <div>
-              <p>Restaurant Picks</p>
-              <h2>Add Riders</h2>
-            </div>
-            <span id="countLabel">0 picks</span>
-          </div>
+      <aside class="side-card">
+        <div class="side-tabs" role="tablist" aria-label="Panels">
+          <button class="side-tab" role="tab" type="button" data-panel="lineup" aria-selected="true">Lineup <span class="pill" id="lineupCount">0</span></button>
+          <button class="side-tab" role="tab" type="button" data-panel="history" aria-selected="false">History</button>
+          <button class="side-tab" role="tab" type="button" data-panel="fame" aria-selected="false">Hall of Fame</button>
+        </div>
 
-          <form class="entry-form" id="entryForm">
-            <div class="entry-combobox">
-              <input id="restaurantInput" type="text" maxlength="50" autocomplete="off" placeholder="Add restaurant name" aria-label="Restaurant name">
-              <button class="suggestion-toggle" id="suggestionToggle" type="button" aria-label="Show saved restaurants">▾</button>
-              <div class="suggestion-dropdown" id="restaurantSuggestions" hidden></div>
-            </div>
-            <button class="add-btn" type="submit">Add</button>
+        <section class="panel" id="panel-lineup" role="tabpanel">
+          <form class="add-form" id="addForm" autocomplete="off">
+            <label class="sr-only" for="nameInput">Restaurant name</label>
+            <input id="nameInput" type="text" maxlength="40" placeholder="Add a restaurant…" list="nameSuggestions" enterkeyhint="done">
+            <datalist id="nameSuggestions"></datalist>
+            <button class="btn primary" type="submit" aria-label="Add restaurant">Add</button>
           </form>
 
-          <ol class="entries" id="entriesList" aria-label="Restaurant entries"></ol>
+          <div class="quick-add" id="quickAddWrap">
+            <span class="quick-label">Quick add</span>
+            <div class="chips" id="quickAdd"></div>
+          </div>
+
+          <ul class="lineup" id="lineup" aria-label="Restaurants in the lineup"></ul>
+
+          <div class="toggles">
+            <label class="switch">
+              <input type="checkbox" id="noRepeatToggle">
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span>Skip yesterday's winner <small>No repeat lunches</small></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="biasToggle">
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span>Let ratings tip the scales <small>Better-rated spots get a bigger slice</small></span>
+            </label>
+          </div>
+
+          <div class="lineup-actions">
+            <button class="btn ghost small" id="shareBtn" type="button">🔗 Share lineup</button>
+            <button class="btn ghost small danger" id="clearBtn" type="button">Clear all</button>
+          </div>
         </section>
 
-        <section class="panel settings-panel">
-          <div class="panel-head">
-            <div>
-              <p>Race Settings</p>
-              <h2 id="lineupSummary">Ready Room</h2>
-            </div>
-          </div>
-
-          <div class="duration-card">
-            <div class="panel-subhead compactish">
-              <strong>Race Length</strong>
-              <span id="durationPreview">01:00</span>
-            </div>
-            <div class="duration-inputs">
-              <label class="time-box">
-                <span>Minutes</span>
-                <input id="minutesInput" type="number" min="0" max="9" value="1" inputmode="numeric">
-              </label>
-              <label class="time-box">
-                <span>Seconds</span>
-                <input id="secondsInput" type="number" min="0" max="599" value="0" inputmode="numeric">
-              </label>
-            </div>
-            <div class="preset-row" aria-label="Race duration presets">
-              <button class="preset-btn" type="button" data-duration="60">1:00</button>
-              <button class="preset-btn" type="button" data-duration="90">1:30</button>
-              <button class="preset-btn" type="button" data-duration="140">2:20</button>
-            </div>
-          </div>
-
-          <div class="duration-card">
-            <div class="panel-subhead compactish">
-              <strong>Advance per heat</strong>
-            </div>
-            <div class="preset-row" aria-label="How many advance per heat">
-              <button class="preset-btn qualifier-btn" type="button" data-qualifiers="1">Top 1</button>
-              <button class="preset-btn qualifier-btn" type="button" data-qualifiers="2">Top 2</button>
-              <button class="preset-btn qualifier-btn" type="button" data-qualifiers="3">Top 3</button>
-            </div>
-          </div>
-
-          <button class="tournament-btn" id="tournamentBtn" type="button">Tournament Mode</button>
-          <button class="danger-btn" id="resetAllBtn" type="button">Clear All Restaurants</button>
+        <section class="panel" id="panel-history" role="tabpanel" hidden>
+          <ul class="history" id="historyList"></ul>
         </section>
 
-        <section class="panel history-panel">
-          <div class="tabs" role="tablist" aria-label="Panels">
-            <button class="tab-btn active" id="lineupTab" type="button" data-tab="lineup" role="tab" aria-selected="true">Lineup</button>
-            <button class="tab-btn" id="historyTab" type="button" data-tab="history" role="tab" aria-selected="false">History</button>
-          </div>
-
-          <div class="tab-panel active" id="lineupPanel" role="tabpanel" aria-labelledby="lineupTab">
-            <div class="stats-list" id="statsList"></div>
-            <span class="last-winner" id="lastWinnerLabel">No winner yet</span>
-          </div>
-
-          <div class="tab-panel" id="historyPanel" role="tabpanel" aria-labelledby="historyTab" hidden>
-            <div class="panel-subhead">
-              <h2>Winner Ratings</h2>
-              <span id="historyCountLabel">0 races</span>
-            </div>
-            <div class="history-list" id="historyList"></div>
-          </div>
+        <section class="panel" id="panel-fame" role="tabpanel" hidden>
+          <ol class="fame" id="fameList"></ol>
         </section>
       </aside>
     </main>
 
-    <script src="app.js?v=20260618-timelock"></script>
+    <footer class="footer">Made with 🧄 garlic sauce &amp; love · Everything stays in your browser</footer>
+
+    <dialog class="result" id="resultDialog" aria-labelledby="resultName">
+      <button class="result-close" id="resultClose" type="button" aria-label="Close">✕</button>
+      <p class="result-kicker" id="resultKicker">The food gods have spoken</p>
+      <div class="result-emoji" id="resultEmoji" aria-hidden="true">🍕</div>
+      <h2 class="result-name" id="resultName">Pizza place</h2>
+      <p class="result-quip" id="resultQuip"></p>
+      <ol class="result-podium" id="resultPodium" hidden></ol>
+      <div class="result-actions">
+        <button class="btn primary big" id="eatBtn" type="button">🍴 Let's eat!</button>
+        <button class="btn ghost" id="rerollBtn" type="button">🎲 Nah, again</button>
+      </div>
+      <a class="result-map" id="mapLink" href="#" target="_blank" rel="noopener">📍 Find it on Google Maps</a>
+    </dialog>
+
+    <div class="emoji-pop" id="emojiPop" hidden role="dialog" aria-label="Choose an emoji"></div>
+    <div class="toast-zone" id="toastZone" aria-live="polite"></div>
+    <canvas class="confetti" id="confettiCanvas" aria-hidden="true"></canvas>
+
+    <script src="app.js"></script>
   </body>
-</>
+</html>

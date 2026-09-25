@@ -1,9 +1,4 @@
-__pycache__/
-*.pyc
+# local preview / test leftovers
+*.png
+node_modules/
 .claude/
-# dev/test artifacts
-foodie_pick_backup_*.db
-server-smoke.log
-server-smoke.err
-smoke-*.png
-logo-check-*
