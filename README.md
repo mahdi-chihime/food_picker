@@ -1,30 +1,30 @@
-# Foodie Pick Derby
+# Foodie Pick 🍽️
 
-Restaurant picker for Thursday lunch chaos: every employee adds a restaurant, every restaurant gets a horse, and the winner is where lunch comes from.
+Can't decide where to eat? Add your spots and let the food gods pick.
 
-## Run
+Live: https://foodie-pick.netlify.app/
 
-```powershell
-python server.py
-```
+## Pick modes
 
-Open:
+- **🎡 Wheel**: classic spin. More chances = bigger slice.
+- **🏁 Race**: every spot gets a racer. Hot-sauce boosts, food comas, first to the plate wins.
+- **🥊 Knockout**: each spin knocks one out. Last bite standing wins.
 
-```text
-http://127.0.0.1:8000
-```
+## Features
 
-The app creates `foodie_pick.db` automatically. Restaurants you remove become inactive, but their old wins and race history stay saved.
+- Emoji auto-picked from the restaurant name (tap it to change)
+- Extra chances (×1–×5) per spot, "sit out today" toggle
+- Skip yesterday's winner, and let star ratings tip the odds
+- History with 1–5 star ratings, plus a Hall of Fame leaderboard
+- Share a lineup as a link with the team
+- Light/dark mode, sound toggle, works on phones
 
-## Reset Everything
+## How it runs
 
-Use **Reset Everything** in the Race Mood panel to delete all restaurants, race history, and ratings.
+Plain static files (`index.html`, `styles.css`, `app.js`), no build step and no server.
+Everything is saved in the browser's localStorage, so each browser keeps its own lineup and history.
+Use **Share lineup** to send the same lineup to teammates.
 
-To reset manually, stop the server and delete `foodie_pick.db`. The next run recreates an empty database with no default restaurants.
+Local preview: open `index.html`, or run any static server (e.g. `python -m http.server`).
 
-## How it works
-
-- Add as many restaurant names as you want.
-- Start the stampede and every restaurant races at the same time.
-- The winning restaurant is saved to history.
-- Ratings can be changed from the History tab after each race.
+Netlify: publish directory is the repo root (see `netlify.toml`).
