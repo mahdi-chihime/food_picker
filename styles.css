@@ -742,6 +742,117 @@ button:disabled { cursor: not-allowed; }
   color: var(--ink-soft);
 }
 
+/* ---------- Teams ---------- */
+
+.team-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 14px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--mustard);
+  color: #2b1d14;
+  font-weight: 800;
+  box-shadow: 0 3px 0 var(--ink);
+  max-width: 220px;
+  transition: transform .15s;
+}
+.team-btn[hidden] { display: none; }
+.team-btn:hover { transform: translateY(-2px); }
+#teamBtnLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.online-dot {
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--basil);
+  color: #fff;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+}
+.online-dot[hidden] { display: none; }
+
+.team-dialog {
+  width: min(92vw, 440px);
+  max-height: 90vh;
+  padding: 26px 22px 22px;
+  border: 3px solid var(--ink);
+  border-radius: 28px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+}
+.team-dialog[open] { animation: result-in .4s cubic-bezier(.2, 1.5, .4, 1); }
+.team-dialog::backdrop { background: rgba(43, 20, 8, 0.55); backdrop-filter: blur(3px); }
+.team-dialog h2 { font-family: var(--display); font-size: 26px; margin: 4px 0 6px; text-align: center; }
+.team-dialog h3 { font-size: 15px; margin: 0 0 8px; }
+.team-hero { text-align: center; font-size: 42px; animation: bob 2.4s ease-in-out infinite; }
+.team-sub { text-align: center; color: var(--ink-soft); font-weight: 600; margin: 0 0 16px; }
+
+.field { display: grid; gap: 6px; font-weight: 800; font-size: 14px; margin-bottom: 14px; }
+.field input, .team-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 13px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card-2);
+  font-weight: 700;
+}
+.field input:focus, .team-row input:focus { outline: none; border-color: var(--tomato); }
+#joinCodeInput { text-transform: uppercase; letter-spacing: .2em; }
+
+.team-form {
+  padding: 14px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--card-2);
+}
+.team-row { display: flex; gap: 8px; }
+.team-row input { background: var(--card); }
+.check { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+
+.or { display: flex; align-items: center; gap: 10px; margin: 12px 0; color: var(--ink-soft); font-weight: 800; font-size: 13px; }
+.or::before, .or::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
+
+.team-error { min-height: 1.2em; margin: 10px 0 0; color: var(--tomato); font-weight: 700; text-align: center; }
+
+#teamIn { text-align: center; }
+.team-name { overflow-wrap: anywhere; }
+.code-card {
+  display: grid;
+  gap: 2px;
+  margin: 12px 0 14px;
+  padding: 12px;
+  border: 2px dashed var(--ink-soft);
+  border-radius: 16px;
+  background: var(--card-2);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-soft);
+}
+.code-card strong { font-family: var(--display); font-size: 36px; letter-spacing: .18em; color: var(--ink); }
+#copyInviteBtn { width: 100%; min-width: 0; }
+.members-title { text-align: left; margin-top: 18px !important; }
+.members { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; text-align: left; }
+.members li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--card-2);
+  font-weight: 700;
+}
+.members .status { width: 10px; height: 10px; border-radius: 50%; background: var(--line); flex: none; }
+.members .status.on { background: var(--basil); box-shadow: 0 0 0 3px rgba(34, 168, 103, .25); }
+.members small { margin-left: auto; color: var(--ink-soft); }
+
 /* ---------- Emoji popover ---------- */
 
 .emoji-pop {
@@ -827,6 +938,7 @@ button:disabled { cursor: not-allowed; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   .side-card { position: static; max-height: none; }
   .tagline { display: none; }
+  .team-btn { padding: 0 10px; max-width: 150px; }
   .topbar { justify-content: space-between; }
 }
 

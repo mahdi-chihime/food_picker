@@ -20,6 +20,10 @@
       </a>
       <p class="tagline" id="tagline">Where are we eating today?</p>
       <div class="topbar-actions">
+        <button class="team-btn" id="teamBtn" type="button" hidden>
+          <span aria-hidden="true">👥</span> <span id="teamBtnLabel">Team up</span>
+          <span class="online-dot" id="onlineBadge" hidden></span>
+        </button>
         <button class="icon-btn" id="soundBtn" type="button" aria-pressed="true" title="Sound on/off">🔊</button>
         <button class="icon-btn" id="themeBtn" type="button" title="Switch light/dark">🌙</button>
       </div>
@@ -138,10 +142,60 @@
       <a class="result-map" id="mapLink" href="#" target="_blank" rel="noopener">📍 Find it on Google Maps</a>
     </dialog>
 
+    <dialog class="team-dialog" id="teamDialog" aria-labelledby="teamTitle">
+      <button class="result-close" id="teamClose" type="button" aria-label="Close">✕</button>
+
+      <div id="teamSolo">
+        <div class="team-hero" aria-hidden="true">🍕🍔🌯</div>
+        <h2 id="teamTitle">Lunch is better together</h2>
+        <p class="team-sub">Create a team and everyone shares the same lineup, history and ratings. Spins play live on everyone's screen!</p>
+
+        <label class="field">
+          <span>Your nickname</span>
+          <input id="nickInput" type="text" maxlength="24" placeholder="e.g. Mahdi" autocomplete="nickname">
+        </label>
+
+        <form class="team-form" id="createTeamForm">
+          <h3>🆕 Start a team</h3>
+          <div class="team-row">
+            <input id="teamNameInput" type="text" maxlength="40" placeholder="Team name, e.g. Lunch Crew" aria-label="Team name" required>
+            <button class="btn primary" type="submit">Create</button>
+          </div>
+          <label class="check"><input type="checkbox" id="bringLineup" checked> Bring my current lineup along</label>
+        </form>
+
+        <div class="or"><span>or</span></div>
+
+        <form class="team-form" id="joinTeamForm">
+          <h3>🔑 Join with a code</h3>
+          <div class="team-row">
+            <input id="joinCodeInput" type="text" maxlength="6" placeholder="ABC123" aria-label="Team code" autocapitalize="characters" required>
+            <button class="btn primary" type="submit">Join</button>
+          </div>
+        </form>
+        <p class="team-error" id="teamError" role="alert"></p>
+      </div>
+
+      <div id="teamIn" hidden>
+        <p class="result-kicker">Your team</p>
+        <h2 class="team-name" id="teamName">Team</h2>
+        <div class="code-card">
+          <span>Invite code</span>
+          <strong id="teamCode">ABC123</strong>
+        </div>
+        <button class="btn primary big" id="copyInviteBtn" type="button">🔗 Copy invite link</button>
+        <h3 class="members-title">Members</h3>
+        <ul class="members" id="memberList"></ul>
+        <button class="btn ghost small danger" id="leaveTeamBtn" type="button">Leave team</button>
+      </div>
+    </dialog>
+
     <div class="emoji-pop" id="emojiPop" hidden role="dialog" aria-label="Choose an emoji"></div>
     <div class="toast-zone" id="toastZone" aria-live="polite"></div>
     <canvas class="confetti" id="confettiCanvas" aria-hidden="true"></canvas>
 
+    <script src="config.js"></script>
     <script src="app.js"></script>
+    <script src="team.js"></script>
   </body>
 </html>

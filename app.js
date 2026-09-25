@@ -102,6 +102,8 @@ function defaultStore() {
     restaurants: [],
     history: [],
     settings: { mode: "wheel", sound: true, noRepeat: false, bias: false, raceLen: 20, theme: null },
+    team: null,
+    nick: "",
   };
 }
 
@@ -115,6 +117,8 @@ function loadStore() {
       restaurants: Array.isArray(data.restaurants) ? data.restaurants : [],
       history: Array.isArray(data.history) ? data.history : [],
       settings: { ...base.settings, ...(data.settings || {}) },
+      team: data.team && data.team.id ? data.team : null,
+      nick: typeof data.nick === "string" ? data.nick : "",
     };
   } catch (_) {
     return base;
@@ -123,11 +127,17 @@ function loadStore() {
 
 function saveStore() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    // In team mode the lists come from the server; keep the personal ones on disk.
+    const lists = store.solo || store;
+    const out = { ...store, restaurants: lists.restaurants, history: lists.history, solo: undefined };
+    localStorage.setItem(STORE_KEY, JSON.stringify(out));
   } catch (_) { /* private mode or storage full: app still works this session */ }
 }
 
 const store = loadStore();
+
+// Filled in by team.js when shared Teams are configured.
+const hooks = { onCommit: null, onPlan: null };
 
 const ui = {
   busy: false,
@@ -212,7 +222,21 @@ function h(tag, props = {}, ...children) {
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 const rand = (min, max) => min + Math.random() * (max - min);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const uid = () => (crypto.randomUUID ? crypto.randomUUID()
+  : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
+    (c ^ (Math.random() * 16) >> (c / 4)).toString(16)));
+
+// Seeded RNG so every teammate's screen replays the exact same spin or race.
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 const norm = (name) => String(name || "").toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g, "");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -268,8 +292,9 @@ function announce(text) {
 function statsFor(name) {
   const key = norm(name);
   const races = store.history.filter((entry) => norm(entry.name) === key);
-  const rated = races.filter((entry) => entry.rating);
-  const avg = rated.length ? rated.reduce((sum, e) => sum + e.rating, 0) / rated.length : null;
+  const scoreOf = (e) => e.avg || e.rating;
+  const rated = races.filter(scoreOf);
+  const avg = rated.length ? rated.reduce((sum, e) => sum + scoreOf(e), 0) / rated.length : null;
   return { wins: races.length, avg };
 }
 
@@ -416,6 +441,7 @@ function clearLineup() {
 function commit() {
   saveStore();
   render();
+  if (hooks.onCommit) hooks.onCommit();
 }
 
 /* ---------------- Sharing ---------------- */
@@ -622,7 +648,9 @@ function renderHistory() {
       h("span", { class: "history-emoji", "aria-hidden": "true" }, entry.emoji || "🍽️"),
       h("div", {},
         h("div", { class: "history-name" }, entry.name),
-        h("div", { class: "history-date" }, `${modeIcon[entry.mode] || ""} ${formatDate(entry.ts)}`),
+        h("div", { class: "history-date" },
+          `${modeIcon[entry.mode] || ""} ${formatDate(entry.ts)}${entry.by ? ` · ${entry.by}` : ""}`
+          + (entry.raters ? ` · ⭐ ${entry.avg.toFixed(1)} (${entry.raters})` : "")),
       ),
       h("button", {
         class: "entry-btn history-del",
@@ -661,7 +689,7 @@ function renderFame() {
     const key = norm(entry.name);
     const row = table.get(key) || { name: entry.name, emoji: entry.emoji, wins: 0, ratings: [] };
     row.wins += 1;
-    if (entry.rating) row.ratings.push(entry.rating);
+    if (entry.avg || entry.rating) row.ratings.push(entry.avg || entry.rating);
     table.set(key, row);
   });
   const rows = [...table.values()].sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name));
@@ -774,11 +802,12 @@ const TAU = Math.PI * 2;
 const wheelCtx = els.wheelCanvas.getContext("2d");
 
 function buildSlices(entries) {
-  const total = entries.reduce((sum, r) => sum + weightOf(r), 0) || 1;
+  const weight = (r) => r.weight ?? weightOf(r);
+  const total = entries.reduce((sum, r) => sum + weight(r), 0) || 1;
   let angle = 0;
   return entries.map((r) => {
-    const span = (weightOf(r) / total) * TAU;
-    const slice = { r, start: angle, end: angle + span, color: colorFor(r) };
+    const span = (weight(r) / total) * TAU;
+    const slice = { r, start: angle, end: angle + span, color: r.color || colorFor(r) };
     angle += span;
     return slice;
   });
@@ -897,9 +926,9 @@ function fitText(ctx, text, maxWidth) {
   return `${trimmed.trim()}…`;
 }
 
-function weightedPick(slices) {
+function weightedPick(slices, rng) {
   const total = slices.reduce((sum, s) => sum + (s.end - s.start), 0);
-  let roll = Math.random() * total;
+  let roll = rng() * total;
   for (const slice of slices) {
     roll -= slice.end - slice.start;
     if (roll <= 0) return slice;
@@ -912,11 +941,11 @@ function sliceAtPointer() {
   return ui.slices.find((s) => theta >= s.start && theta < s.end) || ui.slices[ui.slices.length - 1];
 }
 
-function spinWheel(duration) {
+function spinWheel(rng, duration) {
   return new Promise((resolve) => {
-    const target = weightedPick(ui.slices);
+    const target = weightedPick(ui.slices, rng);
     const span = target.end - target.start;
-    const landAt = target.start + span * rand(0.15, 0.85);
+    const landAt = target.start + span * (0.15 + rng() * 0.7);
     const start = ui.rotation;
     const turns = Math.max(3, Math.round(duration / 900)) * TAU;
     let end = -landAt;
@@ -980,12 +1009,15 @@ function sizeRace(layout) {
   raceCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function makeRace(entries) {
-  const lanes = raceLanes(entries);
+function makeRace(plan, rng) {
+  const lanes = raceLanes(plan.entries);
   const dupes = new Map();
+  const rr = (min, max) => min + rng() * (max - min);
   return {
+    rng,
+    rr,
     t: 0,
-    duration: store.settings.raceLen,
+    duration: plan.raceLen,
     countdown: REDUCED_MOTION ? 1 : 3.6,
     lastBeep: 4,
     finishedAt: null,
@@ -998,37 +1030,42 @@ function makeRace(entries) {
     racers: lanes.map((r, lane) => {
       const n = (dupes.get(r.id) || 0) + 1;
       dupes.set(r.id, n);
-      const { avg } = statsFor(r.name);
-      const bias = store.settings.bias && avg ? (avg - 3) * 0.03 : 0;
       return {
         r,
         lane,
         tag: n > 1 ? ` #${n}` : "",
         p: 0,
-        pace: rand(0.9, 1.1) + bias,
-        kick: rand(0, 0.6),
-        f1: rand(0.25, 0.6), ph1: rand(0, TAU),
-        f2: rand(0.08, 0.18), ph2: rand(0, TAU),
-        hop: rand(0, TAU),
+        pace: rr(0.9, 1.1) + (r.bias || 0),
+        kick: rr(0, 0.6),
+        f1: rr(0.25, 0.6), ph1: rr(0, TAU),
+        f2: rr(0.08, 0.18), ph2: rr(0, TAU),
+        hop: rr(0, TAU),
         boost: 0,
         nap: 0,
-        eventIn: rand(2, 5),
+        eventIn: rr(2, 5),
         finishTime: null,
       };
     }),
   };
 }
 
-function runRace() {
+const RACE_STEP = 1 / 60;
+
+function runRace(plan, rng) {
   return new Promise((resolve) => {
-    const race = makeRace(eligible());
+    const race = makeRace(plan, rng);
     ui.race = race;
     let last = performance.now();
+    let acc = 0;
 
     const frame = (now) => {
-      const dt = Math.min((now - last) / 1000, 0.05);
+      // Fixed timestep: identical results on every device, whatever its frame rate.
+      acc += Math.min((now - last) / 1000, 0.25);
       last = now;
-      stepRace(race, dt);
+      while (acc >= RACE_STEP) {
+        stepRace(race, RACE_STEP);
+        acc -= RACE_STEP;
+      }
       drawRace();
       if (race.finishedAt !== null && race.t - race.finishedAt > 1.1) {
         const order = [...race.racers].sort((a, b) =>
@@ -1076,18 +1113,18 @@ function stepRace(race, dt) {
     x.eventIn -= dt;
     if (x.eventIn <= 0 && race.finishedAt === null) {
       const trailing = leader.p - x.p;
-      const roll = Math.random();
+      const roll = race.rng();
       if (roll < 0.28 + trailing * 1.5) {
-        x.boost = rand(0.9, 1.5);
+        x.boost = race.rr(0.9, 1.5);
         if (!race.banner || race.banner.life < 0.4) {
           setBanner(race, `🌶️ ${x.r.name}${x.tag} hits the hot sauce!`, "#ff5a36");
           sfx.boost();
         }
       } else if (roll > 0.86 && x === leader && progress < 0.8) {
-        x.nap = rand(0.6, 1.1);
+        x.nap = race.rr(0.6, 1.1);
         if (!race.banner || race.banner.life < 0.4) setBanner(race, `😴 ${x.r.name}${x.tag} hit a food coma!`, "#8e5cf7");
       }
-      x.eventIn = finalStretch ? rand(1, 2.2) : rand(2.2, 4.5);
+      x.eventIn = finalStretch ? race.rr(1, 2.2) : race.rr(2.2, 4.5);
     }
     x.boost = Math.max(0, x.boost - dt);
     x.nap = Math.max(0, x.nap - dt);
@@ -1129,7 +1166,7 @@ function stepRace(race, dt) {
   race.leadCooldown -= dt;
   if (!race.winner && leader.r.id !== race.leaderId) {
     if (race.leaderId !== null && race.leadCooldown <= 0 && (!race.banner || race.banner.life < 0.6)) {
-      setBanner(race, `${leader.r.emoji} ${leader.r.name} takes the lead!`, colorFor(leader.r));
+      setBanner(race, `${leader.r.emoji} ${leader.r.name} takes the lead!`, leader.r.color || colorFor(leader.r));
       race.leadCooldown = 1.8;
     }
     race.leaderId = leader.r.id;
@@ -1309,31 +1346,66 @@ function drawRace() {
 
 /* ---------------- Play ---------------- */
 
-async function play() {
+function makePlan() {
+  return {
+    id: uid(),
+    seed: Math.floor(Math.random() * 4294967296),
+    mode: store.settings.mode,
+    raceLen: store.settings.raceLen,
+    by: store.team ? store.nick : null,
+    // Snapshot the field so every screen races exactly the same lineup.
+    entries: eligible().map((r) => {
+      const { avg } = statsFor(r.name);
+      return {
+        id: r.id,
+        name: r.name,
+        emoji: r.emoji,
+        tickets: r.tickets || 1,
+        weight: weightOf(r),
+        bias: store.settings.bias && avg ? (avg - 3) * 0.03 : 0,
+        color: colorFor(r),
+      };
+    }),
+  };
+}
+
+function play() {
   if (ui.busy) return;
-  const entries = eligible();
-  if (entries.length < 2) {
+  if (eligible().length < 2) {
     focusAdd();
     return;
   }
+  const plan = makePlan();
+  if (hooks.onPlan) hooks.onPlan(plan);
+  runPlan(plan);
+}
+
+async function runPlan(plan) {
+  if (ui.busy || !plan || !Array.isArray(plan.entries) || plan.entries.length < 2) return;
   closeEmojiPicker();
+  closeResult();
   sfx.ensure();
   ui.busy = true;
+  ui.race = null;
+  ui.koOut = [];
+  if (MODE_INFO[plan.mode]) store.settings.mode = plan.mode;
   renderStage();
 
+  const rng = mulberry32(plan.seed);
   try {
-    const mode = store.settings.mode;
-    if (mode === "wheel") {
-      ui.slices = buildSlices(entries);
-      const winner = await spinWheel(REDUCED_MOTION ? 1200 : rand(4200, 5400));
+    if (plan.mode === "race") {
+      const { winner, order } = await runRace(plan, rng);
+      showResult(winner, { plan, order });
+    } else if (plan.mode === "knockout") {
+      const winner = await runKnockout(plan.entries, rng);
+      showResult(winner, { plan });
+    } else {
+      ui.slices = buildSlices(plan.entries);
+      const duration = 4200 + rng() * 1200;
+      const winner = await spinWheel(rng, REDUCED_MOTION ? 1200 : duration);
       sfx.win();
       await wait(350);
-      showResult(winner, { mode });
-    } else if (mode === "race") {
-      const { winner, order } = await runRace();
-      showResult(winner, { mode, order });
-    } else {
-      await runKnockout(entries);
+      showResult(winner, { plan });
     }
   } finally {
     ui.busy = false;
@@ -1341,14 +1413,14 @@ async function play() {
   }
 }
 
-async function runKnockout(entries) {
+async function runKnockout(entries, rng) {
   ui.koOut = [];
   let alive = entries.slice();
   ui.slices = buildSlices(alive);
   renderStage();
   while (alive.length > 1) {
     const finalSpin = alive.length === 2;
-    const loser = await spinWheel(REDUCED_MOTION ? 700 : finalSpin ? 3600 : 2300);
+    const loser = await spinWheel(rng, REDUCED_MOTION ? 700 : finalSpin ? 3600 : 2300);
     sfx.knock();
     ui.koOut.push(loser);
     alive = alive.filter((r) => r.id !== loser.id);
@@ -1364,17 +1436,18 @@ async function runKnockout(entries) {
     await wait(REDUCED_MOTION ? 100 : 350);
   }
   sfx.win();
-  showResult(alive[0], { mode: "knockout" });
+  return alive[0];
 }
 
-function showResult(restaurant, { mode, order } = {}) {
-  ui.pending = { restaurant, mode };
+function showResult(restaurant, { plan, order } = {}) {
+  const mode = plan.mode;
+  ui.pending = { restaurant, mode, planId: plan.id };
   const kickers = {
     wheel: "The wheel has spoken",
     race: "And the winner is…",
     knockout: "Last bite standing",
   };
-  els.resultKicker.textContent = kickers[mode] || "The food gods have spoken";
+  els.resultKicker.textContent = plan.by ? `${plan.by} rolled · ${kickers[mode]}` : kickers[mode];
   els.resultEmoji.textContent = restaurant.emoji;
   els.resultName.textContent = restaurant.name;
   els.resultQuip.textContent = ui.vetoes
@@ -1406,15 +1479,19 @@ function closeResult() {
 function confirmEat() {
   const pending = ui.pending;
   if (!pending) return;
-  const { restaurant, mode } = pending;
-  store.history.unshift({
-    id: uid(),
-    ts: Date.now(),
-    name: restaurant.name,
-    emoji: restaurant.emoji,
-    mode,
-    rating: null,
-  });
+  const { restaurant, mode, planId } = pending;
+  // The plan id doubles as the lunch id, so two teammates saving the same pick don't duplicate it.
+  if (!store.history.some((e) => e.id === planId)) {
+    store.history.unshift({
+      id: planId,
+      ts: Date.now(),
+      name: restaurant.name,
+      emoji: restaurant.emoji,
+      mode,
+      rating: null,
+      by: store.team ? store.nick : undefined,
+    });
+  }
   store.history = store.history.slice(0, 200);
   ui.pending = null;
   ui.vetoes = 0;
