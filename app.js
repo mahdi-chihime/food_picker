@@ -10,8 +10,8 @@ const MAX_TICKETS = 5;
 const MAX_RACE_LANES = 16;
 
 const PALETTE = [
-  "#ff5a36", "#ffb400", "#22a867", "#e0457b", "#4c6fff", "#ff8a1f",
-  "#8e5cf7", "#14b8a6", "#b5651d", "#8bc34a", "#f0507a", "#2f9bd6",
+  "#1a7a50", "#ff8a3d", "#f4c542", "#e2557b", "#3e7bd6", "#18a6a0",
+  "#9bc53d", "#b5562f", "#6f86d6", "#f28fad", "#2f5d46", "#ffb86b",
 ];
 
 const EMOJIS = [
@@ -834,7 +834,7 @@ function drawWheel(glow = 0) {
   // Outer rim with bulbs
   ctx.beginPath();
   ctx.arc(c, c, radius, 0, TAU);
-  ctx.fillStyle = "#2b1d14";
+  ctx.fillStyle = "#16231b";
   ctx.fill();
   const bulbs = 24;
   for (let i = 0; i < bulbs; i += 1) {
@@ -842,7 +842,7 @@ function drawWheel(glow = 0) {
     const lit = glow ? (i + Math.floor(glow)) % 2 === 0 : i % 2 === 0;
     ctx.beginPath();
     ctx.arc(c + Math.cos(a) * radius * 0.955, c + Math.sin(a) * radius * 0.955, radius * 0.022, 0, TAU);
-    ctx.fillStyle = lit ? "#ffe07a" : "#8a6a3a";
+    ctx.fillStyle = lit ? "#ffd27a" : "#5c6b4f";
     ctx.fill();
   }
 
@@ -852,7 +852,7 @@ function drawWheel(glow = 0) {
   if (!slices.length) {
     ctx.beginPath();
     ctx.arc(c, c, inner, 0, TAU);
-    ctx.fillStyle = "#f5e6d3";
+    ctx.fillStyle = "#e3edda";
     ctx.fill();
     return;
   }
@@ -895,7 +895,7 @@ function drawWheel(glow = 0) {
         fontSize -= 1;
         ctx.font = `700 ${fontSize}px Fredoka, Nunito, sans-serif`;
       }
-      ctx.fillStyle = isLight(slice.color) ? "#2b1d14" : "#ffffff";
+      ctx.fillStyle = isLight(slice.color) ? "#16231b" : "#ffffff";
       const label = fitText(ctx, slice.r.name, maxWidth);
       // Keep text upright on the left half of the wheel
       const screenAngle = ((mid + ui.rotation) % TAU + TAU) % TAU;
@@ -1089,7 +1089,7 @@ function stepRace(race, dt) {
     }
     if (race.countdown <= 0) {
       sfx.beep(true);
-      setBanner(race, "🍴 EAT!", "#22a867");
+      setBanner(race, "🍴 EAT!", "#3dbf83");
     }
     race.racers.forEach((x) => { x.hop += dt * 3; });
     return;
@@ -1117,12 +1117,12 @@ function stepRace(race, dt) {
       if (roll < 0.28 + trailing * 1.5) {
         x.boost = race.rr(0.9, 1.5);
         if (!race.banner || race.banner.life < 0.4) {
-          setBanner(race, `🌶️ ${x.r.name}${x.tag} hits the hot sauce!`, "#ff5a36");
+          setBanner(race, `🌶️ ${x.r.name}${x.tag} hits the hot sauce!`, "#ff7a5c");
           sfx.boost();
         }
       } else if (roll > 0.86 && x === leader && progress < 0.8) {
         x.nap = race.rr(0.6, 1.1);
-        if (!race.banner || race.banner.life < 0.4) setBanner(race, `😴 ${x.r.name}${x.tag} hit a food coma!`, "#8e5cf7");
+        if (!race.banner || race.banner.life < 0.4) setBanner(race, `😴 ${x.r.name}${x.tag} hit a food coma!`, "#b7a3ff");
       }
       x.eventIn = finalStretch ? race.rr(1, 2.2) : race.rr(2.2, 4.5);
     }
@@ -1144,7 +1144,7 @@ function stepRace(race, dt) {
       if (!race.winner) {
         race.winner = x;
         race.finishedAt = race.t;
-        setBanner(race, `🏆 ${x.r.name} takes the plate!`, "#ffb400");
+        setBanner(race, `🏆 ${x.r.name} takes the plate!`, "#f4c542");
         sfx.win();
       }
     } else {
@@ -1166,7 +1166,7 @@ function stepRace(race, dt) {
   race.leadCooldown -= dt;
   if (!race.winner && leader.r.id !== race.leaderId) {
     if (race.leaderId !== null && race.leadCooldown <= 0 && (!race.banner || race.banner.life < 0.6)) {
-      setBanner(race, `${leader.r.emoji} ${leader.r.name} takes the lead!`, leader.r.color || colorFor(leader.r));
+      setBanner(race, `${leader.r.emoji} ${leader.r.name} takes the lead!`, "#ffffff");
       race.leadCooldown = 1.8;
     }
     race.leaderId = leader.r.id;
@@ -1174,7 +1174,7 @@ function stepRace(race, dt) {
 
   if (finalStretch && !race.finalAnnounced && !race.winner) {
     race.finalAnnounced = true;
-    setBanner(race, "🔥 FINAL STRETCH!", "#ff5a36");
+    setBanner(race, "🔥 FINAL STRETCH!", "#ff7a5c");
   }
 
   // Safety net: never let a race overstay its welcome.
@@ -1201,13 +1201,13 @@ function drawRace() {
   const ctx = raceCtx;
 
   // Tablecloth background
-  ctx.fillStyle = "#fff3df";
+  ctx.fillStyle = "#f3f7ef";
   ctx.fillRect(0, 0, L.width, L.height);
   racers.forEach((_, i) => {
     const y = L.header + i * L.laneH;
-    ctx.fillStyle = i % 2 ? "#ffe8c8" : "#fff6e6";
+    ctx.fillStyle = i % 2 ? "#e6efdf" : "#f7faf4";
     ctx.fillRect(0, y, L.width, L.laneH);
-    ctx.strokeStyle = "rgba(180,120,60,0.25)";
+    ctx.strokeStyle = "rgba(76,94,82,0.25)";
     ctx.setLineDash([8, 8]);
     ctx.beginPath();
     ctx.moveTo(0, y + L.laneH);
@@ -1217,10 +1217,10 @@ function drawRace() {
   });
 
   // Header strip: gingham + banner + timer
-  ctx.fillStyle = "#2b1d14";
+  ctx.fillStyle = "#16231b";
   ctx.fillRect(0, 0, L.width, L.header);
   for (let x = 0; x < L.width; x += 16) {
-    ctx.fillStyle = (x / 16) % 2 ? "rgba(255,90,54,0.35)" : "rgba(255,90,54,0.15)";
+    ctx.fillStyle = (x / 16) % 2 ? "rgba(255,138,61,0.35)" : "rgba(255,138,61,0.15)";
     ctx.fillRect(x, L.header - 6, 16, 6);
   }
 
@@ -1233,25 +1233,25 @@ function drawRace() {
     ctx.fillText(fitText(ctx, race.banner.text, L.width - 110), 14, L.header / 2 - 2);
     ctx.globalAlpha = 1;
   } else if (!race) {
-    ctx.fillStyle = "#ffc23c";
+    ctx.fillStyle = "#ff9a55";
     ctx.textAlign = "left";
     ctx.fillText("Racers ready… first to the plate wins 🍽️", 14, L.header / 2 - 2);
   }
   if (race) {
     const left = Math.max(0, race.duration - race.t);
-    ctx.fillStyle = left < 5 && !race.winner ? "#ff5a36" : "#fff";
+    ctx.fillStyle = left < 5 && !race.winner ? "#ff7a5c" : "#fff";
     ctx.textAlign = "right";
     ctx.font = "700 18px Fredoka, Nunito, sans-serif";
     ctx.fillText(`⏱ ${left.toFixed(1)}s`, L.width - 12, L.header / 2 - 2);
   }
 
   // Start and finish lines
-  ctx.fillStyle = "rgba(43,29,20,0.25)";
+  ctx.fillStyle = "rgba(22,35,27,0.25)";
   ctx.fillRect(L.startX - 2, L.header, 3, L.height - L.header);
   const cell = 7;
   for (let y = L.header, row = 0; y < L.height; y += cell, row += 1) {
     for (let col = 0; col < 2; col += 1) {
-      ctx.fillStyle = (row + col) % 2 ? "#2b1d14" : "#ffffff";
+      ctx.fillStyle = (row + col) % 2 ? "#16231b" : "#ffffff";
       ctx.fillRect(L.finishX + col * cell, y, cell, cell);
     }
   }
@@ -1284,7 +1284,7 @@ function drawRace() {
     ctx.font = `700 ${clamp(L.laneH * 0.32, 11, 15)}px Nunito, sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "rgba(43,29,20,0.55)";
+    ctx.fillStyle = "rgba(22,35,27,0.55)";
     const labelRoom = cx - size * 0.6 - L.startX - 6;
     if (labelRoom > 40) ctx.fillText(fitText(ctx, x.r.name + x.tag, labelRoom), cx - size * 0.6, cy);
     else {
@@ -1293,7 +1293,7 @@ function drawRace() {
     }
 
     // Shadow
-    ctx.fillStyle = "rgba(43,29,20,0.18)";
+    ctx.fillStyle = "rgba(22,35,27,0.18)";
     ctx.beginPath();
     ctx.ellipse(cx, cy + size * 0.42, size * 0.38 * (1 - hop / (L.laneH * 0.5)), size * 0.1, 0, 0, TAU);
     ctx.fill();
@@ -1324,7 +1324,7 @@ function drawRace() {
 
   // Countdown overlay
   if (race && race.countdown > 0) {
-    ctx.fillStyle = "rgba(43,29,20,0.45)";
+    ctx.fillStyle = "rgba(22,35,27,0.45)";
     ctx.fillRect(0, L.header, L.width, L.height - L.header);
     const n = Math.ceil(race.countdown);
     const label = n > 3 ? "Ready?" : String(n);
@@ -1332,8 +1332,8 @@ function drawRace() {
     ctx.save();
     ctx.translate(L.width / 2, L.header + (L.height - L.header) / 2);
     ctx.scale(pulse, pulse);
-    ctx.fillStyle = "#ffc23c";
-    ctx.strokeStyle = "#2b1d14";
+    ctx.fillStyle = "#ff9a55";
+    ctx.strokeStyle = "#16231b";
     ctx.lineWidth = 6;
     ctx.font = `700 ${n > 3 ? 42 : 72}px Fredoka, Nunito, sans-serif`;
     ctx.textAlign = "center";

@@ -394,7 +394,7 @@
       tickets: clamp(Number(e && e.tickets) || 1, 1, 5),
       weight: clamp(Number(e && e.weight) || 1, 0.1, 10),
       bias: clamp(Number(e && e.bias) || 0, -0.1, 0.1),
-      color: /^#[0-9a-f]{6}$/i.test(e && e.color) ? e.color : "#ff5a36",
+      color: /^#[0-9a-f]{6}$/i.test(e && e.color) ? e.color : "#1a7a50",
     })).filter((e) => e.id);
     if (entries.length < 2) return null;
     return {
